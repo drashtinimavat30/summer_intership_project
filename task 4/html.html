@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      color: rgb(8, 136, 221);
+    }
+    #weather {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+      margin: 5px;
+      color: rgb(63, 151, 153);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Weather App</h1>
+  <button onclick="getLocation()">Get Weather by Current Location</button><br><br>
+
+  <input type="text" id="cityInput" placeholder="Enter city name">
+  <button onclick="getWeatherByCity()">Get Weather</button>
+
+  <div id="weather"></div>
+
+  <script>
+    const apiKey = '06ee2a9079e9dbf621f1e422c4ac4e6e';
+    const weatherDiv = document.getElementById('weather');
+
+    function displayWeather(data) {
+      const { name, main, weather, wind } = data;
+      const description = weather[0].description;
+      const temp = main.temp;
+      const humidity = main.humidity;
+      const windSpeed = wind.speed;
+
+      weatherDiv.innerHTML = `
+        <h2>Weather in ${name}</h2>
+        <p>${description}</p>
+        <p>🌡️ Temperature: ${temp} °C</p>
+        <p>💧 Humidity: ${humidity}%</p>
+        <p>💨 Wind Speed: ${windSpeed} m/s</p>
+      `;
+    }
+
+    function getWeatherByCoords(lat, lon) {
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`)
+        .then(response => response.json())
+        .then(data => displayWeather(data))
+        .catch(error => {
+          weatherDiv.innerHTML = `<p>Error fetching weather data.</p>`;
+        });
+    }
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            getWeatherByCoords(latitude, longitude);
+          },
+          () => {
+            weatherDiv.innerHTML = "<p>Unable to retrieve location.</p>";
+          }
+        );
+      } else {
+        weatherDiv.innerHTML = "<p>Geolocation is not supported by this browser.</p>";
+      }
+    }
+
+    function getWeatherByCity() {
+      const city = document.getElementById('cityInput').value;
+      if (!city) {
+        alert("Please enter a city name.");
+        return;
+      }
+
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.cod === 200) {
+            displayWeather(data);
+          } else {
+            weatherDiv.innerHTML = `<p>City not found. Please try again.</p>`;
+          }
+        })
+        .catch(error => {
+          weatherDiv.innerHTML = `<p>Error fetching weather data.</p>`;
+        });
+    }
+  </script>
+
+</body>
+</html>
